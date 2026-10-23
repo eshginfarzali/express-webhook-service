@@ -1,0 +1,46 @@
+# Usage: cp .env.example .env  (set WEBHOOK_SECRETS and ADMIN_API_TOKEN), then
+#        docker compose up --build
+# Values are interpolated from the shell or from .env; empty values fall back
+# to the application defaults.
+services:
+  webhook-service:
+    build: .
+    image: express-webhook-service:local
+    init: true
+    restart: unless-stopped
+    ports:
+      - '${HOST_PORT:-3300}:3300'
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3300
+      DATABASE_PATH: /app/data/webhooks.db
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      TRUST_PROXY: ${TRUST_PROXY:-}
+      WEBHOOK_SECRETS: ${WEBHOOK_SECRETS:?WEBHOOK_SECRETS must be set (see .env.example)}
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?ADMIN_API_TOKEN must be set (see .env.example)}
+      SIGNATURE_TOLERANCE_SECONDS: ${SIGNATURE_TOLERANCE_SECONDS:-}
+      BODY_LIMIT_BYTES: ${BODY_LIMIT_BYTES:-}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-}
+      RETRY_MAX_ATTEMPTS: ${RETRY_MAX_ATTEMPTS:-}
+      RETRY_BASE_DELAY_MS: ${RETRY_BASE_DELAY_MS:-}
+      RETRY_MAX_DELAY_MS: ${RETRY_MAX_DELAY_MS:-}
+      WORKER_POLL_INTERVAL_MS: ${WORKER_POLL_INTERVAL_MS:-}
+      WORKER_BATCH_SIZE: ${WORKER_BATCH_SIZE:-}
+      WORKER_LEASE_MS: ${WORKER_LEASE_MS:-}
+      DELIVERY_URL: ${DELIVERY_URL:-}
+      DELIVERY_TIMEOUT_MS: ${DELIVERY_TIMEOUT_MS:-}
+      SHUTDOWN_TIMEOUT_MS: ${SHUTDOWN_TIMEOUT_MS:-}
+    volumes:
+      - webhook-data:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  webhook-data:
